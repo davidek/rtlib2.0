@@ -67,7 +67,6 @@ namespace RTSim {
         last_time = SIMUL.getTime();
         _bandExEvt.post(last_time + cap);
 
-        
     }
 
     void PollingServer::executing_ready()

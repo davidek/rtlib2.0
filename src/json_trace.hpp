@@ -27,13 +27,24 @@
 #include <rttask.hpp>
 #include <taskevt.hpp>
 
+
+#include <replenishmentserver.hpp>
 namespace RTSim {
+
+
     class JSONTrace {
     protected:
         std::ofstream fd;
         bool first_event;
 
         void writeTaskEvent(const Task &tt, const std::string &evt_name);
+		void writeTaskEventCPU(const Task &tt, const std::string &evt_name, TaskEvt& e);
+
+        void writeServerEvent(const Server &s, const std::string &evt_name);
+        void writeServerEvent(const ReplenishmentServer &s, const std::string &evt_name);
+        void writeServerEventCPU(const Server &s, const std::string &evt_name, ServerEvt& e);
+        void writeServerEventCPU(const ReplenishmentServer &s, const std::string &evt_name, ServerEvt& e);
+
     public:
         JSONTrace(const std::string& name);
         
@@ -48,8 +59,24 @@ namespace RTSim {
         void probe(DeschedEvt& e);
         
         void probe(DeadEvt& e);
+
+        void probe(ServerBudgetExhaustedEvt& e);
+
+        void probe(ServerDMissEvt& e);
+
+        void probe(ServerRechargingEvt& e);
+
+        void probe(ServerScheduledEvt& e);
+
+        void probe(ServerDescheduledEvt& e);
+
+        void probe(ServerReplenishmentEvt& e);
         
         void attachToTask(Task* t);
+
+        void attachToServer(Server* s);
+
+        void attachToPeriodicServerVM(PeriodicServerVM* s);
         
     };
 }

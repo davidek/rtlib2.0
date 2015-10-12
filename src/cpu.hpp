@@ -69,9 +69,14 @@ namespace RTSim {
         // this is the CPU index in a multiprocessor environment
         int index; 
 
+        static int instances;
+
     public:
         /// Constructor for CPUs without Power Saving
         CPU(const std::string &name = "");
+
+        /// Constructor for CPUs without Power Saving and Index
+        CPU(const std::string &name, int cpuIndex);
     
         /// Constructor for CPUs with Power Saving
         CPU(const std::string &name, int num_levels, double V[], int F[]);

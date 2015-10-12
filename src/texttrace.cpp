@@ -6,11 +6,14 @@ namespace RTSim {
 
         TextTrace::TextTrace(const string& name)
 		{
-			fd.open(name.c_str());
+
+            fd.open(name.c_str());
 		}
 
 		TextTrace::~TextTrace()
 		{
+            fd.flush();
+            fd.clear();
 			fd.close();
 		}
 
@@ -34,7 +37,7 @@ namespace RTSim {
 		{
 			Task* tt = e.getTask();
 			fd << "[Time:" << SIMUL.getTime() << "]\t";  
-			fd << tt->getName()<<" scheduled its arrival was " 
+			fd << tt->getName()<<" scheduled on CPU #"<< e.getCPU() <<"; its arrival was " 
 				<< tt->getArrival() << endl; 
 		}
 
@@ -42,7 +45,7 @@ namespace RTSim {
 		{
 			Task* tt = e.getTask();
 			fd << "[Time:" << SIMUL.getTime() << "]\t";  
-			fd << tt->getName()<<" descheduled its arrival was " 
+			fd << tt->getName()<<" descheduled from CPU #"<< e.getCPU() <<";its arrival was " 
 				<< tt->getArrival() << endl;
 		}
 
@@ -51,8 +54,47 @@ namespace RTSim {
 			Task* tt = e.getTask();
 			fd << "[Time:" << SIMUL.getTime() << "]\t";  
 			fd << tt->getName()<<" missed its arrival was " 
-				<< tt->getArrival() << endl;
-		}
+               << tt->getArrival() << endl;
+        }
+
+        void TextTrace::probe(ServerBudgetExhaustedEvt &e)
+        {
+            Server* s = e.getServer();
+            fd << "[Time:" << SIMUL.getTime() << "]\t";
+            fd << s->getName() <<" exhausts the budget " << endl;
+        }
+
+        void TextTrace::probe(ServerRechargingEvt &e)
+        {
+            Server* s = e.getServer();
+            fd << "[Time:" << SIMUL.getTime() << "]\t";
+            fd << s->getName() <<" recharges its budget" << endl;
+        }
+
+        void TextTrace::probe(ServerScheduledEvt &e)
+        {
+            Server* s = e.getServer();
+            fd << "[Time:" << SIMUL.getTime() << "]\t";
+            fd << s->getName() <<" scheduled on CPU #"<< e.getCPU() <<"; its arrival was "
+               << s->getArrival() << endl;
+        }
+
+        void TextTrace::probe(ServerDescheduledEvt &e)
+        {
+            Server* s = e.getServer();
+            fd << "[Time:" << SIMUL.getTime() << "]\t";
+            fd << s->getName() <<" descheduled from CPU #"<< e.getCPU() <<"; its arrival was "
+               << s->getArrival() << endl;
+        }
+
+        void TextTrace::probe(ServerReplenishmentEvt &e)
+        {
+            ReplenishmentServer* s = e.getServer();
+            fd << "[Time:" << SIMUL.getTime() << "]\t";
+            fd << s->getName() <<" has a replenishment; The current budget is "
+               << s->getCurrentBudget() << "(the total is " << s->getBudget() << ")"
+               <<endl;
+        }
 
 		void TextTrace::attachToTask(Task* t)
 		{
@@ -62,6 +104,21 @@ namespace RTSim {
 			new Particle<DeschedEvt, TextTrace>(&t->deschedEvt, this);
 			new Particle<DeadEvt, TextTrace>(&t->deadEvt, this);
 		}
+
+        void TextTrace::attachToServer(Server *s)
+        {
+            new Particle<ServerBudgetExhaustedEvt, TextTrace>(&s->_bandExEvt, this);
+            new Particle<ServerRechargingEvt, TextTrace>(&s->_rechargingEvt, this);
+            new Particle<ServerScheduledEvt, TextTrace>(&s->_schedEvt, this);
+            new Particle<ServerDescheduledEvt, TextTrace>(&s->_deschedEvt, this);
+            if(ReplenishmentServer *rs = dynamic_cast<ReplenishmentServer *> (s))
+                new Particle<ServerReplenishmentEvt, TextTrace>(&rs->_replEvt, this);
+        }
+
+        void TextTrace::attachToPeriodicServerVM(PeriodicServerVM *VM)
+        {
+            attachToServer(VM->getImplementation());
+        }
     
         VirtualTrace::VirtualTrace(map<string, int> *r)
         {

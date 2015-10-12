@@ -26,6 +26,10 @@
 
 #include <rttask.hpp>
 #include <taskevt.hpp>
+#include <serverevt.hpp>
+
+#include <replenishmentserver.hpp>
+#include <periodicservervm.hpp>
 
 namespace RTSim {
     using namespace std;
@@ -48,9 +52,23 @@ namespace RTSim {
         void probe(DeschedEvt& e);
         
         void probe(DeadEvt& e);
+
+        void probe(ServerBudgetExhaustedEvt& e);
+
+        void probe(ServerRechargingEvt& e);
+
+        void probe(ServerScheduledEvt& e);
+
+        void probe(ServerDescheduledEvt& e);
+
+        void probe(ServerReplenishmentEvt& e);
         
         void attachToTask(Task* t);
-        
+
+        void attachToServer(Server* s);
+
+        void attachToPeriodicServerVM(PeriodicServerVM* s);
+
     };
     
     class VirtualTrace {

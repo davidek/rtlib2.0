@@ -3,7 +3,7 @@
 
 #include <factory.hpp>
 #include <server.hpp>
-#include <kernel.hpp>
+#include <partionedmrtkernel.hpp>
 #include <strtoken.hpp>
 
 
@@ -30,12 +30,12 @@ namespace RTSim {
         kernel(0),
         sched_(0),
         currExe_(0),
-        _bandExEvt(this, &Server::onBudgetExhausted, Event::_DEFAULT_PRIORITY + 4),
-        _dlineMissEvt(this, &Server::onDlineMiss, Event::_DEFAULT_PRIORITY + 6),
-        _rechargingEvt(this, &Server::onRecharging, Event::_DEFAULT_PRIORITY - 1),
-	_schedEvt(this, &Server::onSched),
-	_deschedEvt(this, &Server::onDesched),
-	_dispatchEvt(this, &Server::onDispatch, Event::_DEFAULT_PRIORITY + 5)
+        _bandExEvt(this),
+        _dlineMissEvt(this),
+        _rechargingEvt(this),
+        _schedEvt(this),
+        _deschedEvt(this),
+        _dispatchEvt(this)
     {
         DBGENTER(_SERVER_DBG_LEV);
         string s_name = parse_util::get_token(s);
@@ -79,11 +79,15 @@ namespace RTSim {
     // Task interface
     void Server::schedule()
     {
+        if(getCPU())
+            _schedEvt.setCPU(getCPU()->getIndex());
         _schedEvt.process();
     }
 
     void Server::deschedule()
     {
+        if(getCPU())
+            _deschedEvt.setCPU(getCPU()->getIndex());
         _deschedEvt.process();
     }
 
@@ -196,7 +200,8 @@ namespace RTSim {
 
         kernel->suspend(this);
         sched_->notify(NULL);
-        kernel->dispatch();
+
+        kernelDispatch();
 
         executing_recharging();
 
@@ -252,20 +257,22 @@ namespace RTSim {
 
     void Server::newRun()
     {
-	arr = 0;
-	last_arr=0;
-	status = IDLE;
-	dline = 0;
-	abs_dline = 0;
-	last_exec_time = 0;
-	_bandExEvt.drop();
+        arr = 0;
+        last_arr=0;
+        status = IDLE;
+        dline = 0;
+        abs_dline = 0;
+        last_exec_time = 0;
+        _bandExEvt.drop();
         _dlineMissEvt.drop();
         _rechargingEvt.drop();
 
         _schedEvt.drop();
         _deschedEvt.drop();
         _dispatchEvt.drop();
-	currExe_ = NULL;
+
+
+        currExe_ = NULL;
 
     }
 
@@ -295,8 +302,21 @@ namespace RTSim {
             sched_->notify(NULL);
             executing_releasing();
             kernel->suspend(this);
-            kernel->dispatch();
+            kernelDispatch();
+
         }
+    }
+
+    void Server::kernelDispatch(){
+        if(PartionedMRTKernel *pKern = dynamic_cast<PartionedMRTKernel *>(kernel))
+            pKern->dispatch(pKern->getCPUFromTask(this));
+        else
+            kernel->dispatch();
+    }
+
+    CPU* Server::getCPU()
+    {
+        return kernel->getProcessor(this);
     }
 
 }

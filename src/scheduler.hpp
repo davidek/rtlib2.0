@@ -168,7 +168,7 @@ namespace RTSim {
         /**
            Virtual destructor
         */
-        virtual ~Scheduler();
+        ~Scheduler();
 
         /**
            Sets the kernel for this scheduler.

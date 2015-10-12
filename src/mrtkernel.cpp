@@ -109,7 +109,8 @@ namespace RTSim {
             _endEvt[c] = new EndDispatchMultiEvt(*this, *c);
         }
 
-        _sched->setKernel(this);
+		if(_sched)
+			 _sched->setKernel(this);
     }
 
     MRTKernel::MRTKernel(Scheduler *s, absCPUFactory *fact, int n, 
@@ -133,6 +134,22 @@ namespace RTSim {
         _CPUFactory = new uniformCPUFactory();
 
         internalConstructor(1);
+    }
+
+	MRTKernel::MRTKernel(const string& name) 
+        : RTKernel(NULL, name), _migrationDelay(0)
+    {
+        _CPUFactory = new uniformCPUFactory();
+
+        internalConstructor(0);
+    }
+
+
+	MRTKernel::MRTKernel(const string& name, absCPUFactory *cpuFactory) 
+        : RTKernel(NULL, name), _migrationDelay(0), _CPUFactory(cpuFactory)
+    {
+
+        internalConstructor(0);
     }
 
     MRTKernel::~MRTKernel()

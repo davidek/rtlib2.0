@@ -14,6 +14,8 @@
 #include <cpu.hpp>
 
 namespace RTSim {
+
+    int CPU::instances = 0;
   
     CPU::CPU(const std::string &name): Entity(name), frequencySwitching(0),
                                        index(0)
@@ -21,10 +23,17 @@ namespace RTSim {
         cpuName = name;
         PowerSaving = false;
     }
+
+    CPU::CPU(const std::string &name, int cpuIndex): Entity(name), frequencySwitching(0),
+                                       index(cpuIndex)
+    {
+        cpuName = name;
+        PowerSaving = false;
+    }
   
   
     CPU::CPU(const std::string &name, int num_levels, double V[], int F[]) : 
-        Entity(name), frequencySwitching(0), index(0)
+        Entity(name), frequencySwitching(0), index(instances++)
     {
         cpuName = name;
     

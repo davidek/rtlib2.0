@@ -27,6 +27,9 @@ namespace RTSim {
 
     class MRTKernel;
 
+	template<class IT>
+    void clean_mapcontainer(IT b, IT e);
+
     /** 
         This class models and event of "start of context switch". It
         serves to implement a context switch on a certain processor.
@@ -46,7 +49,7 @@ namespace RTSim {
     };
 
     /** 
-        This class models and event of "start of context switch". It
+        This class models and event of "end of context switch". It
         serves to implement a context switch on a certain processor.
         Different from the EndDispatchEvt for single processor
         kernels (RTKernel), since it needs to store a pointer to the
@@ -143,6 +146,16 @@ namespace RTSim {
         typedef map<CPU *, AbsRTTask *>::iterator ITCPU;
         ITCPU getNextFreeProc(ITCPU s, ITCPU e);
 
+		/**
+           Needs to know only the name 
+         */
+        MRTKernel(const std::string &name); 
+  
+		/**
+           Needs to know the name and the cpuFactory
+         */
+		MRTKernel(const string& name, absCPUFactory *cpuFactory);
+
     public:
   
         /**
@@ -163,7 +176,8 @@ namespace RTSim {
            Needs to know scheduler and name
          */
         MRTKernel(Scheduler*, const std::string &name); 
-  
+
+		
         ~MRTKernel();
 
         /**
@@ -205,8 +219,8 @@ namespace RTSim {
          */
         virtual void dispatch();
 
-	void onBeginDispatchMulti(BeginDispatchMultiEvt* e);
-	void onEndDispatchMulti(EndDispatchMultiEvt* e);
+	virtual void onBeginDispatchMulti(BeginDispatchMultiEvt* e);
+	virtual void onEndDispatchMulti(EndDispatchMultiEvt* e);
 
 
         /**

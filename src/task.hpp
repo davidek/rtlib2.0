@@ -202,7 +202,7 @@ namespace RTSim {
 
             @todo simplify the arrival handling, by reducing the number of
             methods to be invoked.
-	*/
+		*/
         virtual void handleArrival(Tick arrival);
 
         /** handles buffered arrivals:  inserts an arrival in the buffer */
@@ -365,6 +365,9 @@ namespace RTSim {
         */
         void discardInstrs(bool selfDestruct = true);
 
+		/** Returns the arrival time of the current instance */
+        Tick getPhase() const;
+
         /** Returns the arrival time of the current instance */
         Tick getArrival() const;
 
@@ -428,6 +431,8 @@ namespace RTSim {
             if this taks does not belong to any kernel.
         */
         AbsKernel *getKernel() { return _kernel; }
+
+		void resetKernel();
 
         /** 
             Returns true if the task is active.
@@ -524,6 +529,9 @@ namespace RTSim {
         int getTaskNumber() const { return getID();}	
 
         void setAbort(bool f) { deadEvt.setAbort(f); }
+
+		virtual Tick getMaxExecutionTime() const { return _maxC; }
+
     };
 
     /// returns the task name, or "(nil)" if the pointer does not point 

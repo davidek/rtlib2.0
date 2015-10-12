@@ -8,29 +8,19 @@ namespace RTSim {
 
     SporadicServer::SporadicServer(Tick q, Tick p, const std::string &name,
                                    const std::string &s) :
-        Server(name, s),
-        Q(q),
-        P(p),
-        cap(0),
-        last_time(0),
-        recharging_time(0),
-        repl_queue(),
-        capacity_queue(),
-        _replEvt(this, &SporadicServer::onReplenishment, 
-		 Event::_DEFAULT_PRIORITY - 1),
-	_idleEvt(this, &SporadicServer::onIdle),
-        vtime()
+        ReplenishmentServer(name, s, q, p)
     {
         DBGENTER(_SERVER_DBG_LEV);
         DBGPRINT(s);
         dline = p;
 
-        // register_handler(_replEvt, this, &SporadicServer::onReplenishment); 
-        // register_handler(_idleEvt, this, &SporadicServer::onIdle); 
     }
 
     void SporadicServer::newRun()
     {
+        Server::newRun();
+        _replEvt.drop();
+        _idleEvt.drop();
         cap = Q;
         last_time = 0;
         recharging_time = 0;
@@ -244,7 +234,16 @@ namespace RTSim {
             DBGPRINT_4("Posting replenishment of ", 
                        repl_queue.front().second, " at ", 
                        repl_queue.front().first);
-            _replEvt.post(repl_queue.front().first);
+            try{
+                _replEvt.post(repl_queue.front().first);
+            }catch(BaseExc &e){
+                /* if the tasks handled by a periodic server
+                *  has too many deadline misses the server
+                *  does not execute and the Replenishment Event
+                *  is posted in the past time, causing an exception.
+                */
+            //    throw UnfeasibleServerBehaviourException();
+            }
         }
     }
 

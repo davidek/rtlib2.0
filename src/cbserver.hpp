@@ -1,14 +1,12 @@
 #ifndef __CBSERVER_H__
 #define __CBSERVER_H__
 
-#include <server.hpp>
-#include <capacitytimer.hpp>
-#include <list>
+#include <replenishmentserver.hpp>
 
 namespace RTSim {
     using namespace MetaSim;
 
-    class CBServer : public Server {
+    class CBServer : public ReplenishmentServer {
     public:
 	typedef enum {ORIGINAL, REUSE_DLINE } policy_t;
 
@@ -18,17 +16,15 @@ namespace RTSim {
         void newRun();
         void endRun();
       
-        virtual Tick getBudget() const { return Q;}
-        virtual Tick getPeriod() const { return P;}
 
         Tick changeBudget(const Tick &n);
 
         Tick changeQ(const Tick &n);
         virtual double getVirtualTime();
-	Tick get_remaining_budget(); 
+        Tick get_remaining_budget();
 
-	policy_t get_policy() const { return idle_policy; }
-	void set_policy(policy_t p) { idle_policy = p; }  
+        policy_t get_policy() const { return idle_policy; }
+        void set_policy(policy_t p) { idle_policy = p; }
 
     protected:
                 
@@ -68,33 +64,8 @@ namespace RTSim {
         void check_repl();
 
     private:
-        Tick Q,P,d;
-        Tick cap; 
-        Tick last_time;
-        Tick recharging_time;
+        Tick d;
         int HR;
-        
-        /// replenishment: it is a pair of <t,b>, meaning that
-        /// at time t the budget should be replenished by b.
-        typedef std::pair<Tick, Tick> repl_t;
-
-        /// queue of replenishments
-        /// all times are in the future!
-	std::list<repl_t> repl_queue;
-
-        /// at the replenishment time, the replenishment is moved
-        /// from the repl_queue to the capacity_queue, so 
-        /// all times are in the past.
-        std::list<repl_t> capacity_queue;
-
-        /// A new event replenishment, different from the general
-        /// "recharging" used in the Server class
-        GEvent<CBServer> _replEvt;
-
-        /// when the server becomes idle
-        GEvent<CBServer> _idleEvt;
-
-        CapacityTimer vtime;
 
 	/** if the server is in IDLE, and idle_policy==true, the
 	    original CBS policy is used (that computes a new deadline

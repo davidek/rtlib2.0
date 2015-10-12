@@ -17,8 +17,8 @@
 #include <baseexc.hpp>
 #include <entity.hpp>
 #include <simul.hpp>
-#include <gevent.hpp>
 
+#include <serverevt.hpp>
 #include <abskernel.hpp>
 #include <abstask.hpp>
 #include <task.hpp>
@@ -28,6 +28,21 @@
 #define _SERVER_DBG_LEV "server"
 
 namespace RTSim {
+
+    /**
+        Exception class that is thrown in the case in which the server tries to
+        post a replenishment event in the past, that happens in the case in which
+        there is a strong unfeasibility in the task set
+
+        @author Casini Daniel
+    */
+    class UnfeasibleServerBehaviourException : public BaseExc
+    {
+    public:
+        inline UnfeasibleServerBehaviourException(
+                const string message = "  Error, not schedulable Task Set: The server executes late and then plans a replenishment event in the past",
+                const string cl = "Server", const string md = "RT_SIM") : BaseExc(message, cl, md) {}
+    };
 
     //using namespace std;
     using namespace MetaSim;
@@ -82,6 +97,13 @@ namespace RTSim {
         virtual public AbsRTTask, virtual public AbsKernel,
         public Entity {
     protected:    
+        friend class ServerBudgetExhaustedEvt;
+        friend class ServerDescheduledEvt;
+        friend class ServerDispatchEvt;
+        friend class ServerDMissEvt;
+        friend class ServerRechargingEvt;
+        friend class ServerScheduledEvt;
+
         static string status_string[];
     
         Tick arr;
@@ -96,14 +118,6 @@ namespace RTSim {
 
         AbsKernel *kernel;
         ResManager *globResManager;
-
-        GEvent<Server> _bandExEvt;
-        GEvent<Server> _dlineMissEvt;
-        GEvent<Server> _rechargingEvt;
-
-        GEvent<Server> _schedEvt;
-        GEvent<Server> _deschedEvt;
-        GEvent<Server> _dispatchEvt;
 
         Scheduler *sched_;
                 
@@ -141,7 +155,20 @@ namespace RTSim {
         /// from recharging to idle (nothing remains to be done)
         virtual void recharging_idle() = 0;
 
+        void kernelDispatch();
+
+        CPU* getCPU();
+
     public:
+
+
+        ServerBudgetExhaustedEvt _bandExEvt;
+        ServerDMissEvt _dlineMissEvt;
+        ServerRechargingEvt _rechargingEvt;
+
+        ServerScheduledEvt _schedEvt;
+        ServerDescheduledEvt _deschedEvt;
+        ServerDispatchEvt _dispatchEvt;
 
         /** 
             The constructor. 

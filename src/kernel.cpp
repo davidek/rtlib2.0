@@ -18,9 +18,13 @@
 #include <cpu.hpp>
 #include <kernel.hpp>
 #include <resmanager.hpp>
-#include <scheduler.hpp>
+#include <edfsched.hpp>
+#include <rmsched.hpp>
+#include <cbserver.hpp>
+#include <sporadicserver.hpp>
 #include <task.hpp>
 #include <reginstr.hpp>
+#include <periodicservervm.hpp>
 
 namespace RTSim {
 
@@ -63,8 +67,10 @@ namespace RTSim {
             _cpu = new CPU;
         }
           
-        s->setKernel(this);
+		if(s)
+			s->setKernel(this);
     }
+
     
     RTKernel::~RTKernel()
     {
@@ -289,5 +295,21 @@ namespace RTSim {
             tmp_ts.push_back(tmp_name);
 
         return tmp_ts;
+    }
+
+    void RTKernel::addVM(PeriodicServerVM &VM)
+    {
+        if(dynamic_cast<EDFScheduler*>(_sched))
+        {
+            VM.setImplementation(new CBServer(VM.getBudget(), VM.getPeriod(), VM.getPeriod(),
+                                              'hard', VM.getName()));
+        }
+        else if(dynamic_cast<RMScheduler*>(_sched))
+        {
+            VM.setImplementation(new SporadicServer(VM.getBudget(), VM.getPeriod(), VM.getName()));
+        }
+        else throw UndefinedVMImplementationException("Does not exist a VM implementation for the given scheduler");
+        Server *implementation = VM.getImplementation();
+        addTask(*implementation, "");
     }
 }

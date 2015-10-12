@@ -177,7 +177,7 @@ namespace RTSim {
     void Task::block() 
     {
 	// check that the task is not idle and is not already blocked
-	if (state == TSK_IDLE or state == TSK_BLOCKED) 
+	if (state == TSK_IDLE || state == TSK_BLOCKED) 
 	    throw string("Task cannot be blocked, because it is ") + 
 		(state == TSK_IDLE ? "idle" : "blocked");
 	_kernel->suspend(this);
@@ -200,6 +200,10 @@ namespace RTSim {
     {
         return lastArrival;
     }
+
+    Tick Task:: getPhase() const{
+		return phase;
+	}
     
     Tick Task::getExecTime() const
     {
@@ -279,6 +283,8 @@ namespace RTSim {
             // book-keeping and forward the event to the
             // father
             handleArrival(SIMUL.getTime());
+			if(getCPU())
+				arrEvt.setCPU(getCPU()->getIndex());
             _kernel->onArrival(this);
         } else {
             DBGPRINT("[Buffered]");
@@ -304,10 +310,10 @@ namespace RTSim {
         deadEvt.drop();
         // normal code
         
-        if (not isActive()) {
+        if (!isActive()) {
             throw TaskNotActive("OnEnd() on a non-active task");
         }
-        if (not isExecuting()) {
+        if (!isExecuting()) {
             throw TaskNotExecuting("OnEnd() on a non-executing task");
         }
         
@@ -345,7 +351,7 @@ namespace RTSim {
         
         DBGENTER(_TASK_DBG_LEV);
         
-        if (not isActive()) {
+        if (!isActive()) {
             DBGPRINT("not active...");
             throw TaskNotActive("killInstance() on a non-active task");
         }
@@ -410,7 +416,7 @@ namespace RTSim {
         DBGPRINT("schedEvt for task " << getName()
                  << " on CPU " << cpu_index);
         
-        if (not isActive()) {
+        if (!isActive()) {
             throw TaskNotActive("OnSched on a non-active task");
         }
         if (isExecuting()) {
@@ -437,10 +443,10 @@ namespace RTSim {
         DBGPRINT("DeschedEvt for task " << getName()
                  << "from CPU" << cpu_index);
         
-        if (not isActive()) {
+        if (!isActive()) {
             throw TaskNotActive("OnDesched on a non-active task");
         }
-        if (not isExecuting()) {
+        if (!isExecuting()) {
             throw TaskNotExecuting("OnDesched() on a non-executing task");
         }
         
@@ -457,7 +463,7 @@ namespace RTSim {
     {
         DBGENTER(_TASK_DBG_LEV);
         DBGPRINT("task : " << getName());
-        if (not isActive()) {
+        if (!isActive()) {
             DBGPRINT("not active...");
             throw TaskNotActive("onInstrEnd() on a non-active task");
         }
@@ -513,7 +519,8 @@ namespace RTSim {
         } else tt = _maxC;
         return tt;
     }
-    
+
+
     void Task::insertCode(const string &code) //throw(ParseExc)
     {
         DBGENTER(_TASK_DBG_LEV);
@@ -528,6 +535,9 @@ namespace RTSim {
             vector<string> par_list = split_param(param);
             
             par_list.push_back(string(getName()));
+
+			if(token.compare("fixed") == 0)
+				_maxC += stoi(param, nullptr);
             
             
             for (j=par_list.begin();j!=par_list.end(); ++j)
@@ -613,6 +623,11 @@ namespace RTSim {
     void Task::resetInstrQueue()
     {
         actInstr = instrQueue.begin();
+    }
+
+	void Task::resetKernel()
+    {
+        _kernel = NULL;
     }
     
     

@@ -8,18 +8,10 @@ namespace RTSim {
 
     CBServer::CBServer(Tick q, Tick p,Tick d, bool HR, const std::string &name,
 		       const std::string &s) :
-        Server(name, s),
-        Q(q),
-        P(p),
-	d(d),
-        cap(0),
-	last_time(0),
-	HR(HR),
-        _replEvt(this, &CBServer::onReplenishment, 
-		 Event::_DEFAULT_PRIORITY - 1),
-	_idleEvt(this, &CBServer::onIdle),
-        vtime(),
-	idle_policy(ORIGINAL)
+        ReplenishmentServer(name, s, q, p),
+        d(d),
+        HR(HR),
+		idle_policy(ORIGINAL)
     {
         DBGENTER(_SERVER_DBG_LEV);
         DBGPRINT(s);
@@ -29,6 +21,9 @@ namespace RTSim {
     {
 	DBGENTER(_SERVER_DBG_LEV);
 	DBGPRINT_2("HR ", HR);
+        Server::newRun();
+        _replEvt.drop();
+        _idleEvt.drop();
         cap = Q;
         last_time = 0;
         recharging_time = 0;
@@ -164,8 +159,19 @@ namespace RTSim {
         }
 	else
 	  {
+              int x = SIMUL.getTime();
               cap=0;
-              _replEvt.post(d);
+              try{
+                _replEvt.post(d);
+              }catch(BaseExc &e)
+              {
+                  /* if the tasks handled by a periodic server
+                  *  has too many deadline misses the server
+                  *  does not execute and the Replenishment Event
+                  *  is posted in the past time, causing an exception.
+                  */
+                  //throw UnfeasibleServerBehaviourException();
+              }
               d=d+P;
               setAbsDead(d);
               status=RECHARGING;
@@ -199,7 +205,7 @@ namespace RTSim {
     void CBServer::onReplenishment(Event *e)
     {
         DBGENTER(_SERVER_DBG_LEV);
-        
+        int x = SIMUL.getTime();
         _replEvt.drop();
 
         DBGPRINT_2("Status before: ", status);
@@ -249,7 +255,7 @@ namespace RTSim {
             if (status == EXECUTING) {
                 DBGPRINT_3("Server ", getName(), " is executing");
                 cap = cap - (SIMUL.getTime() - last_time);
-		_bandExEvt.drop();
+                _bandExEvt.drop();
                 vtime.stop();
                 last_time = SIMUL.getTime();
                 _bandExEvt.post(last_time + cap);

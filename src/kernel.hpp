@@ -25,6 +25,8 @@
 #include <kernevt.hpp>
 #include <cpu.hpp>
 
+
+
 #define _KERNEL_DBG_LEV "Kernel"
 
 namespace RTSim {
@@ -33,6 +35,7 @@ namespace RTSim {
 
     class Scheduler;
     class ResManager;
+    class PeriodicServerVM;
 
     /**
        \ingroup kernels
@@ -128,6 +131,7 @@ namespace RTSim {
            @param c      Pointer to a CPU object
         */
         RTKernel(Scheduler* s, const std::string &name = "", CPU* c= NULL); 
+
 
         /**
            Destructor of the class. It destroys the internal
@@ -355,6 +359,11 @@ namespace RTSim {
          running at the same time.
          */
         virtual std::vector<std::string> getRunningTasks();
+
+		/**
+         It adds a PeriodicServerVM to the kernel
+         */
+        virtual void addVM(PeriodicServerVM &VM);
     };
   
 } // namespace RTSim 

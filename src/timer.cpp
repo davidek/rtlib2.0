@@ -34,7 +34,7 @@ namespace RTSim {
     }
 
     void Timer::onTrigger(MetaSim::Event *) {
-	DBGENTER(_TIMER_DBG_LEV);
+	//DBGENTER(_TIMER_DBG_LEV);
 
 	_triggerEvt.drop();
 	lastTrigger = SIMUL.getTime();
@@ -53,7 +53,7 @@ namespace RTSim {
     void PeriodicTimer::reArm() {
 	Tick t = SIMUL.getTime();
 	_triggerEvt.post(t+_period);
-	DBGENTER(_TIMER_DBG_LEV);
+	//DBGENTER(_TIMER_DBG_LEV);
 	DBGPRINT_2("Timer rearmed at ", (t+_period));
     
 

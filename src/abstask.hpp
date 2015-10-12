@@ -109,6 +109,7 @@ namespace RTSim {
      */ 
     virtual int getTaskNumber() const = 0;
 
+
   };
 
 } // namespace RTSim
