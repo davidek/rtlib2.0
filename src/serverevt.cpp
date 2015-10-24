@@ -13,7 +13,7 @@
  ***************************************************************************/
 #include <server.hpp>
 #include <serverevt.hpp>
-#include <ReplenishmentServer.hpp>
+#include <replenishmentserver.hpp>
 #include <cstdlib>
 
 namespace RTSim {

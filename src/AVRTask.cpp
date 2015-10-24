@@ -5,7 +5,7 @@ email                : simoncelli.stefano@hotmail.it
 ***************************************************************************/
 
 
-#include <D:/RTSIM/rtlib2/src/AVRTask.hpp>
+#include <AVRTask.hpp>
 #define _USE_MATH_DEFINES 
 #include <math.h>
 
