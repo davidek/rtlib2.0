@@ -114,19 +114,36 @@ namespace RTSim {
         */ 
         virtual Tick getInsertTime() { return _insertTime; }
 
+        /**
+           Returns the preemption level.
+
+           By defaut, it is always zero, but it is used for sorting.
+           Thus, subclasses may safely ignore it (or reimplement it).
+
+           Note that, unlike priorities, higher preemption level value
+           brings tasks closer to the queue front
+        */
+        virtual int getPreemptionLevel() const { return 0; }
+
         class TaskModelCmp {
         public:
             /* 
                Remember that lower numbers mean higher priorities...
                This function returns true if "a" has higher priority
-               than "b".  This function was modified to work also in
-               EDF*:
-                           
-               - when 2 tasks have the same priority (i.e. deadline in
-               EDF*), then the priority is decided basing upon the
+               than "b".
+
+               This function was modified to work also in EDF*, and with
+               SRP-enabled schedulers:
+
+               - when 2 tasks have the same priority, then the priority is
+               decided basing upon the preemption level
+               (see getPreemptionLevel() ).
+
+               - when 2 tasks have the same priority and preemption level
+               then the priority is decided basing upon the
                insertion time (see setInsertTime() method).
 
-               - when 2 tasks have the same priority and the same
+               - when 2 tasks have the same priority, preemption level and
                insertion time, then the priority is decided basing
                upon the task number (lower number => higher priority)
 

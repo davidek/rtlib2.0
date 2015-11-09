@@ -34,11 +34,22 @@ namespace RTSim {
 
     bool TaskModel::TaskModelCmp::operator()(TaskModel* a, TaskModel* b)
     {
-        if (a->getPriority() < b->getPriority()) return true;
+        if (a->getPriority() < b->getPriority()) {
+            return true;
+        }
         else if (a->getPriority() == b->getPriority()) {
-            if (a->getInsertTime() < b->getInsertTime()) return true;
-            else if (a->getInsertTime() == b->getInsertTime())
-                if (a->getTaskNumber() < b->getTaskNumber()) return true;
+            if (a->getPreemptionLevel() > b->getPreemptionLevel()) {
+                return true;
+            }
+            else if (a->getPreemptionLevel() == b->getPreemptionLevel()) {
+                if (a->getInsertTime() < b->getInsertTime()) {
+                    return true;
+                }
+                else if (a->getInsertTime() == b->getInsertTime()) {
+                    if (a->getTaskNumber() < b->getTaskNumber())
+                        return true;
+                }
+            }
         }
         return false;
     }
