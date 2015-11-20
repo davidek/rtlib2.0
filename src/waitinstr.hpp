@@ -61,10 +61,10 @@ namespace RTSim {
 
   class WaitInstr : public Instr {
     string _res;
-    EndInstrEvt _endEvt; 
-    WaitEvt _waitEvt;
     int _numberOfRes;
   public:
+    EndInstrEvt _endEvt;
+    WaitEvt _waitEvt;
     /**
        This is the constructor of the WaitInstr.
        @param f is a pointer to the task containing the pseudo
@@ -111,11 +111,11 @@ namespace RTSim {
 
   class SignalInstr : public Instr {
     string _res;
+    int _numberOfRes;
+  public:
     EndInstrEvt _endEvt;
     SignalEvt _signalEvt;
  
-    int _numberOfRes;
-  public:
     /**
        This is the constructor of the SignalInstr
        @param f is a pointer to the task containing the pseudo

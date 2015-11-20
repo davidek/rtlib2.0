@@ -59,11 +59,11 @@ namespace RTSim {
 
   class ThreInstr : public Instr {
 //    string _res;
-    EndInstrEvt _endEvt; 
-    ThreEvt _threEvt;
 //    int _th;
     string _th;
   public:
+    EndInstrEvt _endEvt;
+    ThreEvt _threEvt;
     /**
  //      This is the constructor of the ThreInstr.
  //      @param f is a pointer to the task containing the pseudo

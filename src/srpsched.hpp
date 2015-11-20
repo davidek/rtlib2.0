@@ -17,14 +17,29 @@
 #include <scheduler.hpp>
 #include <edfsched.hpp>
 #include <fpsched.hpp>
+#include <srpresman.hpp>
 
 namespace RTSim {
 
     using namespace MetaSim;
 
-    /** \ingroup sched
+    class SRPBaseScheduler;
+    class EDF_SRPScheduler;
+    class FP_SRPScheduler;
+
+    class SRPSchedExc : public BaseExc
+    {
+    public:
+        SRPSchedExc(
+                const string message,
+                const string cl="SRPScheduler",
+                const string md="srpsched.cpp")
+            : BaseExc(message, cl, md)
+        {}
+    };
+
+    /**
      * @brief Mixin class for deriving SRP models
-     *
      * @author Davide Kirchner
      */
     class SRPBaseModel
@@ -33,52 +48,82 @@ namespace RTSim {
         /** Static preemption level */
         const int _preemption_level;
 
-        /**
-         * When task is running, points to the current system ceiling;
-         * NULL otherways
-         */
-        const int *_system_ceiling;
-
     public:
         SRPBaseModel(int preemption_level)
-            : _preemption_level(preemption_level), _system_ceiling(NULL) {}
+            : _preemption_level(preemption_level)
+        {}
 
-        virtual int getPreemptionLevel() const {
+        virtual int getPreemptionLevel() {
             return _preemption_level;
         }
 
-        /** @brief Notify the task that it started runnig
-         *
-         * @param ceiling Pointer to the System Ceiling
+        /**
+         * Cast this to a TaskModel.
          */
-        virtual void setRunning(const int *ceiling) {
-            _system_ceiling = ceiling;
-        }
-
-        /** @brief Notify the task it's not running any more */
-        virtual void setNotRunning() {
-            _system_ceiling = NULL;
-        }
+        virtual TaskModel *_asTaskModel();
     };
 
 
-    /** \ingroup sched
-     *
+    /**
      * @brief Task model for EDF with SRP support.
-     *
      * @author Davide Kirchner
      */
     class EDF_SRPModel: public EDFModel, public SRPBaseModel {
     public:
         EDF_SRPModel(AbsRTTask *t, int preemption_level)
-            : EDFModel(t), SRPBaseModel(preemption_level)
+          : EDFModel(t), SRPBaseModel(preemption_level)
         {}
-
-        virtual int getPreemptionLevel() const {
-            return SRPBaseModel::getPreemptionLevel();
-        }
     };
 
+
+    /** \ingroup sched
+     * @brief Mixin class for deriving SRP schedulers
+     *
+     * Mixin class for deriving SRP schedulers.
+     *
+     * @author Davide Kirchner
+     */
+    class SRPBaseScheduler
+    {
+    private:
+        SRPResManager *_resman;
+    public:
+        SRPBaseScheduler(): _resman(NULL) {}
+        virtual ~SRPBaseScheduler() {}
+
+        /**
+         * The SRP Scheduler needs access to the (subclass of) SRPResManager
+         * in use.
+         */
+        virtual void setResManager(SRPResManager *resman) { _resman = resman; }
+        virtual int systemCeiling() {
+            if (!_resman)
+                throw SRPSchedExc("You must call setResManager() before using an SRP-aware scheduler");
+            return _resman->systemCeiling();
+        }
+
+        /** @brief Return this, casted to a Scheduler.
+         *
+         * Concrete subclasses should return themselves, as they are schedulers
+         */
+        virtual Scheduler *_asScheduler() = 0;
+
+        /**
+         * Override default, implementing the preemption level check
+         */
+        virtual AbsRTTask *getFirst();
+
+    protected:
+        /** Run getFirst() as in the scheduler the subclass is deriving from. */
+        virtual AbsRTTask *getFirstOrig() = 0;
+
+        /** Return the current running task, proxying from Scheduler */
+        virtual AbsRTTask *_getCurrExe() = 0;
+
+        friend class SRPResManager;
+        /// properly-casted find() method
+        virtual SRPBaseModel *srpfind(AbsRTTask *t) = 0;
+    };
 
 
     /** \ingroup sched
@@ -89,7 +134,7 @@ namespace RTSim {
      *
      * @author Davide Kirchner
      */
-    class EDF_SRPScheduler: public EDFScheduler
+    class EDF_SRPScheduler: public EDFScheduler, public SRPBaseScheduler
     {
     public:
         /**
@@ -97,7 +142,7 @@ namespace RTSim {
          * Doesn't actually make sense.
          */
         virtual void addTask(AbsRTTask *t) {
-            throw(RTSchedExc("Use the parametrized version of addTask"));
+            throw(SRPSchedExc("Use the parametrized version of addTask"));
         }
 
         /**
@@ -114,7 +159,33 @@ namespace RTSim {
         virtual void addTask(AbsRTTask *task, int preemption_level);
 
         virtual void removeTask(AbsRTTask *task);
+
+
+        virtual EDF_SRPScheduler *_asScheduler() {
+            return this;
+        }
+
+        virtual AbsRTTask *getFirst() {
+            return SRPBaseScheduler::getFirst();
+        }
+
+    protected:
+        virtual AbsRTTask *getFirstOrig() {
+            return EDFScheduler::getFirst();
+        }
+
+        virtual SRPBaseModel *srpfind(AbsRTTask *t) {
+            if (t == NULL)
+                throw SRPSchedExc("Got a request for the model of NULL...");
+            SRPBaseModel *ret = dynamic_cast<SRPBaseModel *>(find(t));
+            if (ret == NULL)
+                throw SRPSchedExc("A task model is not an SRPBaseModel");
+            return ret;
+        }
+
+        virtual AbsRTTask *_getCurrExe() { return _currExe; }
     };
+
 
     /** \ingroup sched
      *
@@ -122,7 +193,7 @@ namespace RTSim {
      *
      * @todo This is untested, but should give an idea of how to port SRP to the FP scheduler
      */
-    class FP_SRPSheduler: public FPScheduler {
+    class FP_SRPScheduler: public FPScheduler, public SRPBaseScheduler {
     protected:
         /**
          * \ingroup sched
@@ -132,16 +203,60 @@ namespace RTSim {
         class FP_SRPModel: public FPScheduler::FPModel, public SRPBaseModel {
         public:
             FP_SRPModel(AbsRTTask *t, Tick prio, int preemption_level)
-                : FPScheduler::FPModel(t, prio), SRPBaseModel(preemption_level)
+                : FPModel(t, prio), SRPBaseModel(preemption_level)
             {}
-
-            virtual int getPreemptionLevel() const {
-                return SRPBaseModel::getPreemptionLevel();
-            }
         };
 
     public:
-        FP_SRPSheduler() {}
+        /**
+         * Implements pure virtual rasing an exception.
+         * Doesn't actually make sense.
+         */
+        virtual void addTask(AbsRTTask *t) {
+            throw(SRPSchedExc("Use the parametrized version of addTask"));
+        }
+
+        /**
+         * @brief Add a task, specifying priority and preemption level.
+         *
+         * @param params A string  of two integer comma-separated values:
+         *               priotity and preemption level.
+         */
+        virtual void addTask(AbsRTTask *t, const std::string &params);
+
+        /**
+         * @brief Add a task, specifying priority and preemption level.
+         * @TODO not implemented yet
+         */
+        virtual void addTask(
+                AbsRTTask *task, Tick priority, int preemption_level) {}
+
+        virtual void removeTask(AbsRTTask *task) {} // TODO
+
+
+        virtual FP_SRPScheduler *_asScheduler() {
+            return this;
+        }
+
+        virtual AbsRTTask *getFirst() {
+            return SRPBaseScheduler::getFirst();
+        }
+
+    protected:
+        virtual AbsRTTask *getFirstOrig() {
+            return FPScheduler::getFirst();
+        }
+
+        virtual SRPBaseModel *srpfind(AbsRTTask *t) {
+            if (t == NULL)
+                throw SRPSchedExc("Got a request for the model of NULL...");
+            SRPBaseModel *ret = dynamic_cast<SRPBaseModel *>(find(t));
+            if (ret == NULL)
+                throw SRPSchedExc("A task model is not an SRPBaseModel");
+            return ret;
+        }
+
+        virtual AbsRTTask *_getCurrExe() { return _currExe; }
     };
 
 } // namespace RTSim

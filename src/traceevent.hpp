@@ -42,6 +42,14 @@ namespace RTSim {
     virtual ~Desc() {}
   };
 
+  /**
+   * To the best of my understanding, the TraceEvent and all its subclasses
+   * were only used for producing the binary trace format (see JavaTrace).
+   * So now, with the deprecation of the JavaTrace, this class and all its
+   * inheritance tree are deprecated. -- Davide
+   * Note: I did spend some time figuring out this tracing thing, so I noted
+   * down my findings, but they might not be fully correct.
+   */
   class TraceEvent
   {
   protected:

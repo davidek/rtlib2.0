@@ -59,9 +59,10 @@ namespace RTSim {
 
   class SchedInstr : public Instr {
 //    string _res;
+  public:
     EndInstrEvt _endEvt; 
     SchedIEvt _threEvt;
-  public:
+
     /**
  //      This is the constructor of the SchedInstr.
  //      @param f is a pointer to the task containing the pseudo

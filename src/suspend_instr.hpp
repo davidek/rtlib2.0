@@ -10,12 +10,12 @@
 
 namespace RTSim {
     class SuspendInstr : public Instr { 
-	MetaSim::GEvent<SuspendInstr> suspEvt;
-	MetaSim::GEvent<SuspendInstr> resumeEvt;
-
 	Tick delay;
 
     public:
+	MetaSim::GEvent<SuspendInstr> suspEvt;
+	MetaSim::GEvent<SuspendInstr> resumeEvt;
+
 	SuspendInstr(Task *f, MetaSim::Tick delay);
 	static SuspendInstr * createInstance(std::vector<std::string> &par);
 	
