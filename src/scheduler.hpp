@@ -19,6 +19,7 @@
 #include <simul.hpp>
 #include <entity.hpp>
 #include <abstask.hpp>
+#include <cpu.hpp>
 
 namespace RTSim {
 
@@ -181,6 +182,13 @@ namespace RTSim {
         virtual void addTask(AbsRTTask *task, const std::string &params) = 0;
 
         /**
+         * Make the scheduler aware of the new CPU.
+         *
+         * This implementation does nothing.
+         */
+        virtual void addCPU(CPU *c) {}
+  
+        /**
            Remove a task from this scheduler
         */
         virtual void removeTask(AbsRTTask *task) = 0;
@@ -219,12 +227,27 @@ namespace RTSim {
         /**
          *  returns the first task in the queue, or NULL if
          *  the queue is empty.
+         *
+         *  This version is not multiprocessor-aware. Multiprocessor-specific
+         *  schedulers may implement this raising an exception.
          */
         virtual AbsRTTask *getFirst();
   
         /**
+         *  returns the first task in the queue, or NULL
+         *  the queue is empty.
+         *
+         *  This version is multiprocessor-aware, even though
+         *  the basic implementation simply returns getFirst()
+         */
+        virtual AbsRTTask *getFirst(CPU *c);
+
+        /**
          *  returns the (n+1)-th (0==first) task in the queue
          *  or NULL if the queue has less than n+1 elements.
+         *
+         *  Schedulers that are not based on a single queue may implement
+         *  it raising an exception.
          */ 
         virtual AbsRTTask * getTaskN(unsigned int);
 

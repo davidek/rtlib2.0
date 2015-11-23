@@ -103,10 +103,7 @@ namespace RTSim {
     {
         for(int i=0; i<n; i++)  {
             CPU *c = _CPUFactory->createCPU();
-            _m_currExe[c] = NULL;
-            _isContextSwitching[c] = false;
-            _beginEvt[c] = new BeginDispatchMultiEvt(*this, *c);
-            _endEvt[c] = new EndDispatchMultiEvt(*this, *c);
+            addCPU(c);
         }
 
 		if(_sched)
@@ -166,6 +163,8 @@ namespace RTSim {
         _isContextSwitching[c] = false;
         _beginEvt[c] = new BeginDispatchMultiEvt(*this, *c);
         _endEvt[c] = new EndDispatchMultiEvt(*this, *c);
+
+        _sched->addCPU(c);
     }
     
     void MRTKernel::addTask(AbsRTTask &t, const string &param)

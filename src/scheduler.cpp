@@ -278,4 +278,9 @@ namespace RTSim {
         return getTaskN(0);
  
     }
+
+    AbsRTTask* Scheduler::getFirst(CPU *c)
+    {
+        return getFirst();
+    }
 }

@@ -173,7 +173,7 @@ namespace RTSim {
     {
         DBGENTER(_KERNEL_DBG_LEV);
 
-        AbsRTTask *newExe = _sched->getFirst();
+        AbsRTTask *newExe = _sched->getFirst(_cpu);
 
         if (newExe != NULL)
             DBGPRINT_2("From sched: ",

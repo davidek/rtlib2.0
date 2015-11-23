@@ -29,8 +29,6 @@ namespace RTSim {
 
     class absCPUFactory;
 
-	class absSchedulerFactory;
-
     class AbsTaskAllocation;
 
     /**

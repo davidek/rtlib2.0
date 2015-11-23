@@ -8,7 +8,7 @@ find_package(metasim REQUIRED)
 set(metasim_INCLUDE_DIRS "${metasim_DIR}/../../src")
 
 # Enable debug messages
-# SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D__DEBUG__" )
+SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D__DEBUG__" )
 
 # Include dirs.
 add_subdirectory (src)
